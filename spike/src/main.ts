@@ -1,7 +1,7 @@
 import './style.css'
 
 
-import { Bale, StartBox, type Course, type CourseElement } from './model';
+import { Bale, StartBox, type Course, type Item } from './model';
 import { canvasPointToWorld, getArenaViewport, renderCourse } from './renderer';
 
 
@@ -15,16 +15,16 @@ const course: Course = {
     widthFt: 30,
     heightFt: 20,
   },
-  elements: [
+  items: [
     new Bale(5, 4),
-    new Bale(11, 10),
+    new Bale(11, 10, true),
     new StartBox(25, 0),
   ],
 };
 
 renderCourse(canvas, ctx, course);
 
-let draggedElement: CourseElement | null = null;
+let draggedElement: Item | null = null;
 let lastPointerXWorld = 0;
 let lastPointerYWorld = 0;
 
@@ -85,12 +85,12 @@ canvas.addEventListener('pointercancel', (event) => {
 
 canvas.addEventListener('keydown', (event) => {
 
-  const selected = course.elements.find((element) => element.selected);
+  const selected = course.items.find((element) => element.selected);
   if (selected === undefined) {
     return;
   }
 
-  const step = event.shiftKey ? 1 : 0.25;
+  const step = event.shiftKey ? 0.25 : 1;
   let handled = false;
 
   if (event.key === 'ArrowUp') {
@@ -140,15 +140,15 @@ function getCanvasPoint(event: PointerEvent) {
   };
 }
 
-function setSelection(selected: CourseElement | null) {
-  for (const element of course.elements) {
+function setSelection(selected: Item | null) {
+  for (const element of course.items) {
     element.selected = element === selected;
   }
 }
 
 function findTopMostElementAt(x: number, y: number) {
-  for (let index = course.elements.length - 1; index >= 0; index -= 1) {
-    const element = course.elements[index];
+  for (let index = course.items.length - 1; index >= 0; index -= 1) {
+    const element = course.items[index];
     if (element.hitTest(x, y)) {
       return element;
     }

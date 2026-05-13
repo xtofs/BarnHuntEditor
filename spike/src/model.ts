@@ -9,15 +9,15 @@ export interface ArenaSize {
 
 export interface Course {
     arena: ArenaSize;
-    elements: CourseElement[];
+    items: Item[];
 }
 
 
-export interface CourseElement {
+export interface Item {
     x: number;
     y: number;
     selected: boolean;
-    draw(ctx: CanvasRenderingContext2D): void;
+    draw(ctx: CanvasRenderingContext2D, arena: ArenaSize): void;
     hitTest(x: number, y: number): boolean;
     moveBy(dx: number, dy: number, arena: ArenaSize): void;
 
@@ -26,11 +26,12 @@ export interface CourseElement {
 }
 
 
-export class Bale implements CourseElement {
-    constructor(x: number, y: number) {
+export class Bale implements Item {
+    constructor(x: number, y: number, isAnchor: boolean = false) {
         this.x = x; this.y = y;
         this.selected = false;
         this.rotated = false;
+        this.isAnchor = isAnchor;
         this.level = 1;
     }
 
@@ -38,13 +39,14 @@ export class Bale implements CourseElement {
     y: number;
     selected: boolean;
     rotated: boolean;
+    isAnchor: boolean;
     level: BaleLevel;
 
     static WIDTH: number = 3;
     static HEIGHT: number = 2;
     static CORNER_RADIUS: number = 0.25;
 
-    draw(ctx: CanvasRenderingContext2D): void {
+    draw(ctx: CanvasRenderingContext2D, arena: ArenaSize): void {
         const px = toWorldUnits(ctx);
         const level = this.level;
         ctx.fillStyle = style.bale[level].fill;
@@ -59,6 +61,10 @@ export class Bale implements CourseElement {
         ctx.roundRect(x, y, w, h, r);
         ctx.fill();
         ctx.stroke();
+
+        if (this.isAnchor) {
+            this.drawAnchorGuides(ctx, arena);
+        }
 
         if (this.selected) {
             const delta = px(4);
@@ -91,6 +97,10 @@ export class Bale implements CourseElement {
             this.rotated = !this.rotated;
             return true;
         }
+        if (event.key.toLowerCase() === 'a') {
+            this.isAnchor = !this.isAnchor;
+            return true;
+        }
         if (event.key === '1' || event.key === '2' || event.key === '3') {
             this.level = Number(event.key) as BaleLevel;
             console.log(`level set to ${this.level}`);
@@ -109,9 +119,58 @@ export class Bale implements CourseElement {
     getZOrder(): number {
         return this.level * 2;
     }
+
+    private drawAnchorGuides(ctx: CanvasRenderingContext2D, arena: ArenaSize) {
+        const px = toWorldUnits(ctx);
+        const { width, height } = this.getSize();
+        const centerX = this.x + width / 2;
+        const centerY = this.y + height / 2;
+
+        const leftDistance = this.x;
+        const rightDistance = arena.widthFt - (this.x + width);
+        const topDistance = this.y;
+        const bottomDistance = arena.heightFt - (this.y + height);
+
+        const lineEndX = leftDistance <= rightDistance ? 0 : arena.widthFt;
+        const lineStartX = leftDistance <= rightDistance ? this.x : (this.x + width);
+        const lineEndY = topDistance <= bottomDistance ? 0 : arena.heightFt;
+        const lineStartY = topDistance <= bottomDistance ? this.y : (this.y + height);
+        const horizontalDistance = Math.min(leftDistance, rightDistance);
+        const verticalDistance = Math.min(topDistance, bottomDistance);
+
+        ctx.strokeStyle = '#1f2937';
+        ctx.lineWidth = px(1.5);
+
+        ctx.beginPath();
+        ctx.moveTo(lineStartX, centerY);
+        ctx.lineTo(lineEndX, centerY);
+        ctx.moveTo(centerX, lineStartY);
+        ctx.lineTo(centerX, lineEndY);
+        ctx.stroke();
+
+        const fontSize = px(14);
+        ctx.font = `${fontSize}px sans-serif`;
+        ctx.fillStyle = '#111827';
+
+        const horizontalText = `${horizontalDistance.toFixed(1)}'`;
+        const horizontalMidX = (centerX + lineEndX) / 2;
+        const horizontalMidY = centerY;
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(horizontalText, horizontalMidX, horizontalMidY - px(3));
+
+        const verticalText = `${verticalDistance.toFixed(1)}'`;
+        const verticalMidX = centerX;
+        const verticalMidY = (centerY + lineEndY) / 2;
+
+        ctx.textAlign = lineEndX === 0 ? 'left' : 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(verticalText, verticalMidX + (lineEndX === 0 ? px(4) : -px(4)), verticalMidY);
+    }
 }
 
-export class StartBox implements CourseElement {
+export class StartBox implements Item {
     constructor(x: number, y: number) {
         this.x = x; this.y = y;
         this.selected = false;
@@ -124,7 +183,7 @@ export class StartBox implements CourseElement {
     static WIDTH: number = 3;
     static HEIGHT: number = 3;
 
-    draw(ctx: CanvasRenderingContext2D): void {
+    draw(ctx: CanvasRenderingContext2D, _arena: ArenaSize): void {
         const px = toWorldUnits(ctx);
 
         ctx.fillStyle = style.startBox.fill;

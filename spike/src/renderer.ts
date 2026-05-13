@@ -48,9 +48,9 @@ export function renderCourse(
 
     drawGrid(ctx, course.arena);
 
-    course.elements.sort((a, b) => a.getZOrder() - b.getZOrder());
-    for (const element of course.elements) {
-        element.draw(ctx);
+    course.items.sort((a, b) => a.getZOrder() - b.getZOrder());
+    for (const element of course.items) {
+        element.draw(ctx, course.arena);
     }
 
     ctx.restore();
