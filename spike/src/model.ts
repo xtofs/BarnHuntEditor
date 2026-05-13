@@ -1,4 +1,4 @@
-import { style } from './renderer';
+import { style } from './renderer'
 
 type BaleLevel = 1 | 2 | 3;
 
@@ -40,8 +40,8 @@ export class Bale implements CourseElement {
     rotated: boolean;
     level: BaleLevel;
 
-    static WIDTH: number = 8;
-    static HEIGHT: number = 4;
+    static WIDTH: number = 3;
+    static HEIGHT: number = 2;
     static CORNER_RADIUS: number = 0.25;
 
     draw(ctx: CanvasRenderingContext2D): void {
@@ -121,8 +121,8 @@ export class StartBox implements CourseElement {
     y: number;
     selected: boolean;
 
-    static WIDTH: number = 5;
-    static HEIGHT: number = 5;
+    static WIDTH: number = 3;
+    static HEIGHT: number = 3;
 
     draw(ctx: CanvasRenderingContext2D): void {
         const px = toWorldUnits(ctx);
@@ -156,24 +156,34 @@ export class StartBox implements CourseElement {
     }
 
     moveBy(dx: number, dy: number, arena: ArenaSize): void {
+        const { width, height } = this.getSize();
+        const maxX = arena.widthFt - width;
+        const maxY = arena.heightFt - height;
 
-        if (this.x <= 0.4 && this.y <= 0.4) {
-            this.x += dx;
-            this.y += dy;
-        } else if (this.x <= 0.4) {
+        this.x = clamp(this.x + dx, 0, maxX);
+        this.y = clamp(this.y + dy, 0, maxY);
+
+        const distanceToLeft = this.x;
+        const distanceToRight = maxX - this.x;
+        const distanceToTop = this.y;
+        const distanceToBottom = maxY - this.y;
+
+        const minDistance = Math.min(
+            distanceToLeft,
+            distanceToRight,
+            distanceToTop,
+            distanceToBottom,
+        );
+
+        if (minDistance === distanceToLeft) {
             this.x = 0;
-            this.y += dy;
-        } else if (this.y <= 0.4) {
-            this.x += dx;
+        } else if (minDistance === distanceToRight) {
+            this.x = maxX;
+        } else if (minDistance === distanceToTop) {
             this.y = 0;
         } else {
-            this.x += dx;
-            this.y += dy;
+            this.y = maxY;
         }
-        const { width, height } = this.getSize();
-
-        this.x = clamp(this.x, 0, arena.widthFt - width);
-        this.y = clamp(this.y, 0, arena.heightFt - height);
     }
 
     handleKeyDown(_event: KeyboardEvent): boolean {

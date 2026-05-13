@@ -57,7 +57,7 @@ export function renderCourse(
 }
 
 export function getArenaViewport(canvas: HTMLCanvasElement, arena: ArenaSize): ArenaViewport {
-    const paddingPx = 20;
+    const paddingPx = 44;
     const availableWidth = Math.max(1, canvas.width - paddingPx * 2);
     const availableHeight = Math.max(1, canvas.height - paddingPx * 2);
     const scale = Math.min(availableWidth / arena.widthFt, availableHeight / arena.heightFt);
@@ -87,6 +87,8 @@ export function drawGrid(ctx: CanvasRenderingContext2D, arena: ArenaSize) {
     const scale = Math.max(0.0001, ctx.getTransform().a);
     const px = (value: number) => value / scale;
     const majorStepFt = 5;
+    const tickLength = px(6);
+    const labelGap = px(5);
 
     ctx.beginPath();
     for (let x = 0; x <= arena.widthFt; x += 1) {
@@ -101,25 +103,42 @@ export function drawGrid(ctx: CanvasRenderingContext2D, arena: ArenaSize) {
     ctx.lineWidth = px(0.75);
     ctx.stroke();
 
+    ctx.strokeStyle = '#6b7280';
+    ctx.lineWidth = px(1.25);
+    ctx.beginPath();
+    for (let x = 0; x <= arena.widthFt; x += majorStepFt) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, -tickLength);
+        ctx.moveTo(x, arena.heightFt);
+        ctx.lineTo(x, arena.heightFt + tickLength);
+    }
+    for (let y = 0; y <= arena.heightFt; y += majorStepFt) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(-tickLength, y);
+        ctx.moveTo(arena.widthFt, y);
+        ctx.lineTo(arena.widthFt + tickLength, y);
+    }
+    ctx.stroke();
+
     ctx.fillStyle = '#222';
-    ctx.font = `${px(11)}px sans-serif`;
+    ctx.font = `${px(12)}px sans-serif`;
 
     ctx.textAlign = 'center';
     for (let x = 0; x <= arena.widthFt; x += majorStepFt) {
         const label = x.toString();
         ctx.textBaseline = 'bottom';
-        ctx.fillText(label, x, -px(2));
+        ctx.fillText(label, x, -tickLength - labelGap);
         ctx.textBaseline = 'top';
-        ctx.fillText(label, x, arena.heightFt + px(2));
+        ctx.fillText(label, x, arena.heightFt + tickLength + labelGap);
     }
 
     ctx.textBaseline = 'middle';
     for (let y = 0; y <= arena.heightFt; y += majorStepFt) {
         const label = y.toString();
         ctx.textAlign = 'right';
-        ctx.fillText(label, -px(2), y);
+        ctx.fillText(label, -tickLength - labelGap, y);
         ctx.textAlign = 'left';
-        ctx.fillText(label, arena.widthFt + px(2), y);
+        ctx.fillText(label, arena.widthFt + tickLength + labelGap, y);
     }
 
     ctx.strokeStyle = '#6b7280';
