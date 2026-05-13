@@ -5,27 +5,35 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>spike</title>
-  <script type="module" crossorigin src="./assets/index-DjFEBWOq.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BnT_-quO.css">
+  <title>Barn Hunt Editor</title>
+  <script type="module" crossorigin src="./assets/index-9cRimdyC.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CxgxKoOv.css">
 </head>
 
 <body>
   <div id="app">
-    <aside class="layout-panel">
+    <aside class="layout-panel no-print">
       <h1>Course Layout</h1>
       <p>
-        Arena and element sizes are defined in world units (feet). The canvas view is scaled to show the full arena.
+        Bales and other items can be edited with the keyboard or the mouse.
       </p>
       <ul>
-        <li>Drag elements to move</li>
-        <li>Arrow keys move selected element</li>
-        <li>Hold Shift for smaller keyboard step</li>
-        <li>Press R to rotate a bale</li>
+        <li>Drag items to move</li>
+        <li><kbd>↓</kbd> <kbd>↑</kbd> <kbd>←</kbd> <kbd>→</kbd> to move selected elements</li>
+        <li><kbd>Shift</kbd> for smaller movements</li>
+        <li><kbd>r</kbd> to rotate a bale</li>
+        <li><kbd>a</kbd> to toggle anchor</li>
+        <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> to change the level of bale</li>
+        <li><kbd>Del</kbd> to remove selected element</li>
       </ul>
     </aside>
     <section class="canvas-panel">
       <canvas id="ring" tabindex="0"></canvas>
+    </section>
+    <section class="footer no-print">
+      <!-- <iframe src="https://github.com/sponsors/xtofs/button" title="Sponsor xtofs"        height="32" width="114"></iframe> -->
+      <a class="sponsor" href="https://github.com/sponsors/xtofs" rel="noopener" target="_blank">sponsor the developer
+        of this page</a>
     </section>
   </div>
 </body>
