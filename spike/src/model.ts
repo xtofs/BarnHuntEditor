@@ -2,6 +2,16 @@ import { style } from './renderer';
 
 type BaleLevel = 1 | 2 | 3;
 
+export interface ArenaSize {
+    widthFt: number;
+    heightFt: number;
+}
+
+export interface Course {
+    arena: ArenaSize;
+    elements: CourseElement[];
+}
+
 
 export interface CourseElement {
     x: number;
@@ -9,8 +19,7 @@ export interface CourseElement {
     selected: boolean;
     draw(ctx: CanvasRenderingContext2D): void;
     hitTest(x: number, y: number): boolean;
-    // moveBy(dx: number, dy: number, rect: { width: number, height: number }): void;
-    moveBy(dx: number, dy: number, rect: DOMRect): void;
+    moveBy(dx: number, dy: number, arena: ArenaSize): void;
 
     handleKeyDown(event: KeyboardEvent): boolean;
     getZOrder(): number;
@@ -31,15 +40,16 @@ export class Bale implements CourseElement {
     rotated: boolean;
     level: BaleLevel;
 
-    static WIDTH: number = 160;
-    static HEIGHT: number = 80;
-    static CORNER_RADIUS: number = 5;
+    static WIDTH: number = 8;
+    static HEIGHT: number = 4;
+    static CORNER_RADIUS: number = 0.25;
 
     draw(ctx: CanvasRenderingContext2D): void {
+        const px = toWorldUnits(ctx);
         const level = this.level;
         ctx.fillStyle = style.bale[level].fill;
         ctx.strokeStyle = style.bale[level].stroke;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = px(1);
 
         let { x, y } = this;
         let { width: w, height: h } = this.getSize();
@@ -51,8 +61,8 @@ export class Bale implements CourseElement {
         ctx.stroke();
 
         if (this.selected) {
-            const delta = 4;
-            ctx.lineWidth = style.selection.width;
+            const delta = px(4);
+            ctx.lineWidth = px(style.selection.width);
             ctx.strokeStyle = style.selection.stroke;
 
             ctx.beginPath();
@@ -66,14 +76,14 @@ export class Bale implements CourseElement {
         return x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height;
     }
 
-    moveBy(dx: number, dy: number, rect: DOMRect): void {
+    moveBy(dx: number, dy: number, arena: ArenaSize): void {
         this.x += dx;
         this.y += dy;
 
         const { width, height } = this.getSize();
 
-        this.x = clamp(this.x, 0, rect.right - width);
-        this.y = clamp(this.y, 0, rect.bottom - height);
+        this.x = clamp(this.x, 0, arena.widthFt - width);
+        this.y = clamp(this.y, 0, arena.heightFt - height);
     }
 
     handleKeyDown(event: KeyboardEvent): boolean {
@@ -111,14 +121,15 @@ export class StartBox implements CourseElement {
     y: number;
     selected: boolean;
 
-    static WIDTH: number = 100;
-    static HEIGHT: number = 100;
+    static WIDTH: number = 5;
+    static HEIGHT: number = 5;
 
     draw(ctx: CanvasRenderingContext2D): void {
+        const px = toWorldUnits(ctx);
 
         ctx.fillStyle = style.startBox.fill;
         ctx.strokeStyle = style.startBox.stroke;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = px(1);
 
         let { x, y } = this;
         let { width: w, height: h } = this.getSize();
@@ -129,8 +140,8 @@ export class StartBox implements CourseElement {
         ctx.stroke();
 
         if (this.selected) {
-            const delta = 4;
-            ctx.lineWidth = style.selection.width;
+            const delta = px(4);
+            ctx.lineWidth = px(style.selection.width);
             ctx.strokeStyle = style.selection.stroke;
 
             ctx.beginPath();
@@ -144,15 +155,15 @@ export class StartBox implements CourseElement {
         return x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height;
     }
 
-    moveBy(dx: number, dy: number, rect: DOMRect): void {
+    moveBy(dx: number, dy: number, arena: ArenaSize): void {
 
-        if (this.x <= 8 && this.y <= 8) {
+        if (this.x <= 0.4 && this.y <= 0.4) {
             this.x += dx;
             this.y += dy;
-        } else if (this.x <= 8) {
+        } else if (this.x <= 0.4) {
             this.x = 0;
             this.y += dy;
-        } else if (this.y <= 8) {
+        } else if (this.y <= 0.4) {
             this.x += dx;
             this.y = 0;
         } else {
@@ -161,8 +172,8 @@ export class StartBox implements CourseElement {
         }
         const { width, height } = this.getSize();
 
-        this.x = clamp(this.x, 2, rect.right - width);
-        this.y = clamp(this.y, 2, rect.bottom - height);
+        this.x = clamp(this.x, 0, arena.widthFt - width);
+        this.y = clamp(this.y, 0, arena.heightFt - height);
     }
 
     handleKeyDown(_event: KeyboardEvent): boolean {
@@ -181,5 +192,10 @@ export class StartBox implements CourseElement {
 
 function clamp(x: number, min: number, max: number): number {
     return Math.min(Math.max(min, x), max);
+}
+
+function toWorldUnits(ctx: CanvasRenderingContext2D) {
+    const scale = Math.max(0.0001, ctx.getTransform().a);
+    return (pixels: number) => pixels / scale;
 }
 

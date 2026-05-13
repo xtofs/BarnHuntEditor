@@ -1,8 +1,8 @@
 import './style.css'
 
 
-import { Bale, StartBox, type CourseElement } from './model';
-import { renderCourse as renderCourse } from './renderer';
+import { Bale, StartBox, type Course, type CourseElement } from './model';
+import { canvasPointToWorld, getArenaViewport, renderCourse } from './renderer';
 
 
 const canvas = document.getElementById('ring') as HTMLCanvasElement;
@@ -10,34 +10,42 @@ const ctx = canvas.getContext('2d')!;
 
 resizeCanvasToElement();
 
-const elements: CourseElement[] = [
-  new Bale(50, 40),
-  new Bale(100, 100),
-  new StartBox(400, 0)
-]
+const course: Course = {
+  arena: {
+    widthFt: 30,
+    heightFt: 20,
+  },
+  elements: [
+    new Bale(5, 4),
+    new Bale(11, 10),
+    new StartBox(25, 0),
+  ],
+};
 
-renderCourse(canvas, ctx, elements);
+renderCourse(canvas, ctx, course);
 
 let draggedElement: CourseElement | null = null;
-let lastPointerX = 0;
-let lastPointerY = 0;
+let lastPointerXWorld = 0;
+let lastPointerYWorld = 0;
 
 canvas.addEventListener('pointerdown', (event) => {
-  const point = getCanvasPoint(event);
-  const hitElement = findTopMostElementAt(point.x, point.y);
+  const canvasPoint = getCanvasPoint(event);
+  const viewport = getArenaViewport(canvas, course.arena);
+  const worldPoint = canvasPointToWorld(canvasPoint.x, canvasPoint.y, viewport);
+  const hitElement = findTopMostElementAt(worldPoint.x, worldPoint.y);
 
   setSelection(hitElement);
 
   if (hitElement !== null) {
     draggedElement = hitElement;
-    lastPointerX = point.x;
-    lastPointerY = point.y;
+    lastPointerXWorld = worldPoint.x;
+    lastPointerYWorld = worldPoint.y;
 
     canvas.setPointerCapture(event.pointerId);
     canvas.focus();
   }
 
-  renderCourse(canvas, ctx, elements);
+  renderCourse(canvas, ctx, course);
 });
 
 canvas.addEventListener('pointermove', (event) => {
@@ -45,17 +53,18 @@ canvas.addEventListener('pointermove', (event) => {
     return;
   }
 
-  const point = getCanvasPoint(event);
-  const dx = point.x - lastPointerX;
-  const dy = point.y - lastPointerY;
+  const canvasPoint = getCanvasPoint(event);
+  const viewport = getArenaViewport(canvas, course.arena);
+  const worldPoint = canvasPointToWorld(canvasPoint.x, canvasPoint.y, viewport);
+  const dx = worldPoint.x - lastPointerXWorld;
+  const dy = worldPoint.y - lastPointerYWorld;
 
-  const rect = canvas.getBoundingClientRect();
-  draggedElement.moveBy(dx, dy, rect);
+  draggedElement.moveBy(dx, dy, course.arena);
 
-  lastPointerX = point.x;
-  lastPointerY = point.y;
+  lastPointerXWorld = worldPoint.x;
+  lastPointerYWorld = worldPoint.y;
 
-  renderCourse(canvas, ctx, elements);
+  renderCourse(canvas, ctx, course);
 });
 
 canvas.addEventListener('pointerup', (event) => {
@@ -76,26 +85,25 @@ canvas.addEventListener('pointercancel', (event) => {
 
 canvas.addEventListener('keydown', (event) => {
 
-  const rect = canvas.getBoundingClientRect();
-  const selected = elements.find((element) => element.selected);
+  const selected = course.elements.find((element) => element.selected);
   if (selected === undefined) {
     return;
   }
 
-  const step = event.shiftKey ? 10 : 2;
+  const step = event.shiftKey ? 1 : 0.25;
   let handled = false;
 
   if (event.key === 'ArrowUp') {
-    selected.moveBy(0, -step, rect);
+    selected.moveBy(0, -step, course.arena);
     handled = true;
   } else if (event.key === 'ArrowDown') {
-    selected.moveBy(0, step, rect);
+    selected.moveBy(0, step, course.arena);
     handled = true;
   } else if (event.key === 'ArrowLeft') {
-    selected.moveBy(-step, 0, rect);
+    selected.moveBy(-step, 0, course.arena);
     handled = true;
   } else if (event.key === 'ArrowRight') {
-    selected.moveBy(step, 0, rect);
+    selected.moveBy(step, 0, course.arena);
     handled = true;
   } else {
     handled = selected.handleKeyDown(event);
@@ -103,21 +111,22 @@ canvas.addEventListener('keydown', (event) => {
 
   if (handled) {
     event.preventDefault();
-    renderCourse(canvas, ctx, elements);
+    renderCourse(canvas, ctx, course);
   }
 });
 
 window.addEventListener('resize', () => {
   resizeCanvasToElement();
-  renderCourse(canvas, ctx, elements);
+  renderCourse(canvas, ctx, course);
 });
 
 
 
 function resizeCanvasToElement() {
   const bounds = canvas.getBoundingClientRect();
-  canvas.width = bounds.width;
-  canvas.height = bounds.height;
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.max(1, Math.round(bounds.width * dpr));
+  canvas.height = Math.max(1, Math.round(bounds.height * dpr));
 }
 
 function getCanvasPoint(event: PointerEvent) {
@@ -132,14 +141,14 @@ function getCanvasPoint(event: PointerEvent) {
 }
 
 function setSelection(selected: CourseElement | null) {
-  for (const element of elements) {
+  for (const element of course.elements) {
     element.selected = element === selected;
   }
 }
 
 function findTopMostElementAt(x: number, y: number) {
-  for (let index = elements.length - 1; index >= 0; index -= 1) {
-    const element = elements[index];
+  for (let index = course.elements.length - 1; index >= 0; index -= 1) {
+    const element = course.elements[index];
     if (element.hitTest(x, y)) {
       return element;
     }

@@ -10,7 +10,21 @@
 
 <body>
   <div id="app">
-    <canvas id="ring"></canvas>
+    <aside class="layout-panel">
+      <h1>Course Layout</h1>
+      <p>
+        Arena and element sizes are defined in world units (feet). The canvas view is scaled to show the full arena.
+      </p>
+      <ul>
+        <li>Drag elements to move</li>
+        <li>Arrow keys move selected element</li>
+        <li>Hold Shift for larger keyboard step</li>
+        <li>Press R to rotate a bale</li>
+      </ul>
+    </aside>
+    <section class="canvas-panel">
+      <canvas id="ring" tabindex="0"></canvas>
+    </section>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
