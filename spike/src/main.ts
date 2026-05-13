@@ -1,60 +1,151 @@
 import './style.css'
-import typescriptLogo from './assets/typescript.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import { setupCounter } from './counter.ts'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = /*html*/`
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${typescriptLogo}" class="framework" alt="TypeScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.ts</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
 
-<div class="ticks"></div>
+import { Bale, StartBox, type CourseElement } from './model';
+import { renderCourse as renderCourse } from './renderer';
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://www.typescriptlang.org" target="_blank">
-          <img class="button-icon" src="${typescriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+const canvas = document.getElementById('ring') as HTMLCanvasElement;
+const ctx = canvas.getContext('2d')!;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+resizeCanvasToElement();
+
+const elements: CourseElement[] = [
+  new Bale(50, 40),
+  new Bale(100, 100),
+  new StartBox(400, 0)
+]
+
+renderCourse(canvas, ctx, elements);
+
+let draggedElement: CourseElement | null = null;
+let lastPointerX = 0;
+let lastPointerY = 0;
+
+canvas.addEventListener('pointerdown', (event) => {
+  const point = getCanvasPoint(event);
+  const hitElement = findTopMostElementAt(point.x, point.y);
+
+  setSelection(hitElement);
+
+  if (hitElement !== null) {
+    draggedElement = hitElement;
+    lastPointerX = point.x;
+    lastPointerY = point.y;
+
+    canvas.setPointerCapture(event.pointerId);
+    canvas.focus();
+  }
+
+  renderCourse(canvas, ctx, elements);
+});
+
+canvas.addEventListener('pointermove', (event) => {
+  if (draggedElement === null) {
+    return;
+  }
+
+  const point = getCanvasPoint(event);
+  const dx = point.x - lastPointerX;
+  const dy = point.y - lastPointerY;
+
+  const rect = canvas.getBoundingClientRect();
+  draggedElement.moveBy(dx, dy, rect);
+
+  lastPointerX = point.x;
+  lastPointerY = point.y;
+
+  renderCourse(canvas, ctx, elements);
+});
+
+canvas.addEventListener('pointerup', (event) => {
+  if (canvas.hasPointerCapture(event.pointerId)) {
+    canvas.releasePointerCapture(event.pointerId);
+  }
+
+  draggedElement = null;
+});
+
+canvas.addEventListener('pointercancel', (event) => {
+  if (canvas.hasPointerCapture(event.pointerId)) {
+    canvas.releasePointerCapture(event.pointerId);
+  }
+
+  draggedElement = null;
+});
+
+canvas.addEventListener('keydown', (event) => {
+
+  const rect = canvas.getBoundingClientRect();
+  const selected = elements.find((element) => element.selected);
+  if (selected === undefined) {
+    return;
+  }
+
+  const step = event.shiftKey ? 10 : 2;
+  let handled = false;
+
+  if (event.key === 'ArrowUp') {
+    selected.moveBy(0, -step, rect);
+    handled = true;
+  } else if (event.key === 'ArrowDown') {
+    selected.moveBy(0, step, rect);
+    handled = true;
+  } else if (event.key === 'ArrowLeft') {
+    selected.moveBy(-step, 0, rect);
+    handled = true;
+  } else if (event.key === 'ArrowRight') {
+    selected.moveBy(step, 0, rect);
+    handled = true;
+  } else {
+    handled = selected.handleKeyDown(event);
+  }
+
+  if (handled) {
+    event.preventDefault();
+    renderCourse(canvas, ctx, elements);
+  }
+});
+
+window.addEventListener('resize', () => {
+  resizeCanvasToElement();
+  renderCourse(canvas, ctx, elements);
+});
+
+
+
+function resizeCanvasToElement() {
+  const bounds = canvas.getBoundingClientRect();
+  canvas.width = bounds.width;
+  canvas.height = bounds.height;
+}
+
+function getCanvasPoint(event: PointerEvent) {
+  const bounds = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / bounds.width;
+  const scaleY = canvas.height / bounds.height;
+
+  return {
+    x: (event.clientX - bounds.left) * scaleX,
+    y: (event.clientY - bounds.top) * scaleY,
+  };
+}
+
+function setSelection(selected: CourseElement | null) {
+  for (const element of elements) {
+    element.selected = element === selected;
+  }
+}
+
+function findTopMostElementAt(x: number, y: number) {
+  for (let index = elements.length - 1; index >= 0; index -= 1) {
+    const element = elements[index];
+    if (element.hitTest(x, y)) {
+      return element;
+    }
+  }
+
+  return null;
+}
+
+
