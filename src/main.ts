@@ -90,7 +90,7 @@ canvas.addEventListener('keydown', (event) => {
     return;
   }
 
-  const step = event.shiftKey ? 0.25 : 1;
+  const step = event.shiftKey ? 0.2 : 1;
   let handled = false;
 
   if (event.key === 'ArrowUp') {
