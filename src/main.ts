@@ -59,7 +59,9 @@ canvas.addEventListener('pointermove', (event) => {
   const dx = worldPoint.x - lastPointerXWorld;
   const dy = worldPoint.y - lastPointerYWorld;
 
-  draggedElement.moveBy(dx, dy, course.arena);
+  draggedElement.x += dx;
+  draggedElement.y += dy;
+  draggedElement.applyPlacementRules(course.arena);
 
   lastPointerXWorld = worldPoint.x;
   lastPointerYWorld = worldPoint.y;
@@ -83,37 +85,7 @@ canvas.addEventListener('pointercancel', (event) => {
   draggedElement = null;
 });
 
-canvas.addEventListener('keydown', (event) => {
-
-  const selected = course.items.find((element) => element.selected);
-  if (selected === undefined) {
-    return;
-  }
-
-  const step = event.shiftKey ? 0.2 : 1;
-  let handled = false;
-
-  if (event.key === 'ArrowUp') {
-    selected.moveBy(0, -step, course.arena);
-    handled = true;
-  } else if (event.key === 'ArrowDown') {
-    selected.moveBy(0, step, course.arena);
-    handled = true;
-  } else if (event.key === 'ArrowLeft') {
-    selected.moveBy(-step, 0, course.arena);
-    handled = true;
-  } else if (event.key === 'ArrowRight') {
-    selected.moveBy(step, 0, course.arena);
-    handled = true;
-  } else {
-    handled = selected.handleKeyDown(event);
-  }
-
-  if (handled) {
-    event.preventDefault();
-    renderCourse(canvas, ctx, course);
-  }
-});
+canvas.addEventListener('keydown', keydownHandler);
 
 window.addEventListener('resize', () => {
   resizeCanvasToElement();
@@ -121,6 +93,77 @@ window.addEventListener('resize', () => {
 });
 
 
+function keydownHandler(event: KeyboardEvent) {
+
+  // single Shift press creates a weird event
+  if (event.key === "Shift") return;
+
+  const selected = course.items.find((element) => element.selected);
+  if (selected === undefined) {
+    return;
+  }
+  const step = event.shiftKey ? 0.2 : 1;
+  let handled = false;
+
+  // arrow, delete and are handled here, the rest gets delegated to the seleced object
+  switch (event.key) {
+    case 'ArrowUp':
+      selected.y -= step;
+      handled = true;
+      break;
+
+    case 'ArrowDown':
+      selected.y += step;
+      handled = true;
+      break;
+
+    case 'ArrowLeft':
+      selected.x -= step;
+      handled = true;
+      break;
+
+    case 'ArrowRight':
+      selected.x += step;
+      handled = true;
+      break;
+
+    case 'Tab':
+      if (selected !== null) {
+        const ix = course.items.findIndex(item => item === selected);
+        const step = event.shiftKey ? -1 : 1;
+        const len = course.items.length;
+        const next = course.items[(ix + step + len) % len];
+        next.selected = true;
+        selected.selected = false;
+        handled = true;
+      }
+      break;
+
+    case 'Delete':
+    case 'Backspace':
+      course.items = course.items.filter(item => !item.selected);
+      handled = true
+      break;
+
+    case ' ':
+      selected.selected = false;
+      handled = true;
+      break;
+
+    default:
+      // delegate to item
+      handled = selected.handleKeyDown(event);
+      break;
+  }
+
+  if (handled) {
+    selected.applyPlacementRules(course.arena);
+    renderCourse(canvas, ctx, course);
+    event.preventDefault();
+  } else {
+    console.warn(`unhandled keydown ${event.shiftKey ? "Shift+" : ""}${event.key}`)
+  }
+};
 
 function resizeCanvasToElement() {
   const bounds = canvas.getBoundingClientRect();

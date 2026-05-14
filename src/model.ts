@@ -17,12 +17,15 @@ export interface Item {
     x: number;
     y: number;
     selected: boolean;
+
     draw(ctx: CanvasRenderingContext2D, arena: ArenaSize): void;
-    hitTest(x: number, y: number): boolean;
-    moveBy(dx: number, dy: number, arena: ArenaSize): void;
+    getZOrder(): number;
 
     handleKeyDown(event: KeyboardEvent): boolean;
-    getZOrder(): number;
+    hitTest(x: number, y: number): boolean;
+
+    // moveBy(dx: number, dy: number): void;
+    applyPlacementRules(arena: ArenaSize): void;
 }
 
 
@@ -82,12 +85,13 @@ export class Bale implements Item {
         return x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height;
     }
 
-    moveBy(dx: number, dy: number, arena: ArenaSize): void {
+    moveBy(dx: number, dy: number): void {
         this.x += dx;
         this.y += dy;
+    }
 
+    applyPlacementRules(arena: ArenaSize) {
         const { width, height } = this.getSize();
-
         this.x = clamp(this.x, 0, arena.widthFt - width);
         this.y = clamp(this.y, 0, arena.heightFt - height);
     }
@@ -214,13 +218,13 @@ export class StartBox implements Item {
         return x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height;
     }
 
-    moveBy(dx: number, dy: number, arena: ArenaSize): void {
+    applyPlacementRules(arena: ArenaSize): void {
         const { width, height } = this.getSize();
         const maxX = arena.widthFt - width;
         const maxY = arena.heightFt - height;
 
-        this.x = clamp(this.x + dx, 0, maxX);
-        this.y = clamp(this.y + dy, 0, maxY);
+        this.x = clamp(this.x, 0, maxX);
+        this.y = clamp(this.y, 0, maxY);
 
         const distanceToLeft = this.x;
         const distanceToRight = maxX - this.x;
@@ -245,8 +249,12 @@ export class StartBox implements Item {
         }
     }
 
-    handleKeyDown(_event: KeyboardEvent): boolean {
+    moveBy(dx: number, dy: number): void {
+        this.x += dx;
+        this.y += dy;
+    }
 
+    handleKeyDown(_event: KeyboardEvent): boolean {
         return false;
     }
 
@@ -267,4 +275,3 @@ function toWorldUnits(ctx: CanvasRenderingContext2D) {
     const scale = Math.max(0.0001, ctx.getTransform().a);
     return (pixels: number) => pixels / scale;
 }
-
