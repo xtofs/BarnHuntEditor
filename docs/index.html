@@ -6,36 +6,44 @@
   <link rel="icon" type="image/png" href="./favicon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Barn Hunt Editor</title>
-  <script type="module" crossorigin src="./assets/index-CPIzMEj_.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CogwoNA1.css">
+  <script type="module" crossorigin src="./assets/index-CFhw1zfY.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-3pY-AHhy.css">
 </head>
 
 <body>
   <div id="app">
-    <aside class="layout-panel no-print">
-      <h1>Course Layout</h1>
-      <p>
-        Bales and other items can be edited with the keyboard or the mouse.
-      </p>
-      <ul>
-        <li>Drag items to move</li>
-        <li><kbd>↓</kbd> <kbd>↑</kbd> <kbd>←</kbd> <kbd>→</kbd> move selected item</li>
-        <li><kbd>r</kbd> rotate</li>
-        <li><kbd>a</kbd> anchor toggle</li>
-        <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> set level</li>
-        <li><kbd>␡</kbd> <kbd>⌫</kbd> remove selected item</li>
-      </ul>
-      <p id="control"></p>
-    </aside>
+    <section class="button-bar no-print" role="toolbar" aria-label="Editor actions">
+      <div class="button-bar-actions">
+        <button id="open-help" class="pill-btn" type="button">Keyboard help</button>
+        <button id="open-palette-dialog" class="pill-btn" type="button">Edit color palette</button>
+      </div>
+      <a class="pill-btn button-link" href="https://github.com/sponsors/xtofs" rel="noopener"
+        target="_blank">Sponsor</a>
+    </section>
+
     <section class="canvas-panel">
       <canvas id="ring" tabindex="0"></canvas>
     </section>
-    <section class="footer no-print">
-      <!-- <iframe src="https://github.com/sponsors/xtofs/button" title="Sponsor xtofs"        height="32" width="114"></iframe> -->
-      <a class="sponsor" href="https://github.com/sponsors/xtofs" rel="noopener" target="_blank">sponsor the developer
-        of this page</a>
-    </section>
   </div>
+
+  <dialog id="palette-dialog-placeholder" class="no-print"></dialog>
+
+  <dialog id="keyboard-help-dialog" class="help-dialog no-print">
+    <h2>Keyboard shortcuts</h2>
+    <p>Use the mouse and keyboard to edit.</p>
+    <ul>
+      <li>Drag items to move</li>
+      <li><kbd>↓</kbd> <kbd>↑</kbd> <kbd>←</kbd> <kbd>→</kbd> move</li>
+      <li><kbd>r</kbd> rotate</li>
+      <li><kbd>a</kbd> anchor toggle</li>
+      <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> set level</li>
+      <li><kbd>␡</kbd> <kbd>⌫</kbd> remove selected</li>
+    </ul>
+    <form method="dialog">
+      <button type="submit" class="pill-btn" value="close">Close</button>
+    </form>
+  </dialog>
+
 </body>
 
 </html>
