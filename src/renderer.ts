@@ -96,8 +96,8 @@ export function drawGrid(ctx: CanvasRenderingContext2D, arena: ArenaSize) {
     }
     ctx.stroke();
 
-    ctx.fillStyle = '#222';
-    ctx.font = `${px(12)}px sans-serif`;
+    ctx.fillStyle = '#000000';
+    ctx.font = `${px(18)}px sans-serif`;
 
     ctx.textAlign = 'center';
     for (let x = 0; x <= arena.widthFt; x += majorStepFt) {

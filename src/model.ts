@@ -47,7 +47,7 @@ export class Bale implements Item {
 
     static WIDTH: number = 3;
     static HEIGHT: number = 2;
-    static CORNER_RADIUS: number = 0.25;
+    static CORNER_RADIUS: number = 0.1;
 
     with_level(new_level: BaleLevel): Bale {
         this.level = new_level
@@ -142,8 +142,6 @@ export class Bale implements Item {
     private drawAnchorGuides(ctx: CanvasRenderingContext2D, arena: ArenaSize) {
         const px = toWorldUnits(ctx);
         const { width, height } = this.getSize();
-        const centerX = this.x + width / 2;
-        const centerY = this.y + height / 2;
 
         const leftDistance = this.x;
         const rightDistance = arena.widthFt - (this.x + width);
@@ -157,9 +155,10 @@ export class Bale implements Item {
         const horizontalDistance = Math.min(leftDistance, rightDistance);
         const verticalDistance = Math.min(topDistance, bottomDistance);
 
-        ctx.strokeStyle = '#1f2937';
-        ctx.lineWidth = px(1.5);
+        const centerX = this.x + width / 2;
+        const centerY = this.y + height / 2;
 
+        ctx.lineWidth = px(1.5);
         ctx.beginPath();
         ctx.moveTo(lineStartX, centerY);
         ctx.lineTo(lineEndX, centerY);
@@ -167,25 +166,23 @@ export class Bale implements Item {
         ctx.lineTo(centerX, lineEndY);
         ctx.stroke();
 
-        const fontSize = px(14);
-        ctx.font = `${fontSize}px sans-serif`;
-        ctx.fillStyle = '#111827';
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.strokeStyle = '#000000';
+        ctx.font = `${px(18)}px sans-serif`;
+        ctx.fillStyle = '#000000';
 
         const horizontalText = `${horizontalDistance.toFixed(1)}'`;
         const horizontalMidX = (centerX + lineEndX) / 2;
         const horizontalMidY = centerY;
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(horizontalText, horizontalMidX, horizontalMidY - px(3));
+        whiteOut(ctx, horizontalText, horizontalMidX, horizontalMidY);
+        ctx.fillText(horizontalText, horizontalMidX, horizontalMidY);
 
         const verticalText = `${verticalDistance.toFixed(1)}'`;
         const verticalMidX = centerX;
         const verticalMidY = (centerY + lineEndY) / 2;
-
-        ctx.textAlign = lineEndX === 0 ? 'left' : 'right';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(verticalText, verticalMidX + (lineEndX === 0 ? px(4) : -px(4)), verticalMidY);
+        whiteOut(ctx, verticalText, verticalMidX, verticalMidY);
+        ctx.fillText(verticalText, verticalMidX, verticalMidY);
     }
 }
 
@@ -290,3 +287,20 @@ function toWorldUnits(ctx: CanvasRenderingContext2D) {
     const scale = Math.max(0.0001, ctx.getTransform().a);
     return (pixels: number) => pixels / scale;
 }
+
+function whiteOut(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
+    const px = toWorldUnits(ctx);
+    ctx.save();
+    ctx.fillStyle = "white"; // same as canvas background
+    const metrics = ctx.measureText(text);
+    const textWidth = metrics.width;
+    const textHeight = px(18); // approximate
+    const padding = px(4);
+    ctx.fillRect(
+        x - textWidth / 2 - padding,
+        y - textHeight / 2 - padding,
+        textWidth + padding * 2,
+        textHeight + padding * 2);
+    ctx.restore();
+}
+

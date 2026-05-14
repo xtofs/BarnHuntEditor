@@ -73,16 +73,24 @@ export async function purgePalette(): Promise<void> {
     currentPalette = clonePalette(defaultPalette)
 }
 
-export function initializePaletteDialog(hostSelector: string, options?: PaletteDialogOptions): void {
-    const host = document.querySelector<HTMLElement>(hostSelector)
-    if (!host) {
-        throw new Error(`Palette host not found: ${hostSelector}`)
+export function initializePaletteDialog(dialogPlaceholderSelector: string, openButtonSelector: string, options?: PaletteDialogOptions): void {
+    const dialogPlaceholder = document.querySelector<HTMLDialogElement>(dialogPlaceholderSelector)
+    if (!dialogPlaceholder) {
+        throw new Error(`Palette dialog placeholder not found: ${dialogPlaceholderSelector}`)
     }
 
-    host.innerHTML = createDialogShellHtml()
+    const openButton = document.querySelector<HTMLButtonElement>(openButtonSelector)
+    if (!openButton) {
+        throw new Error(`Palette open button not found: ${openButtonSelector}`)
+    }
 
-    const dialog = host.querySelector<HTMLDialogElement>('[data-role="palette-dialog"]')!
-    const openButton = host.querySelector<HTMLButtonElement>('[data-action="open-palette-dialog"]')!
+    dialogPlaceholder.outerHTML = createDialogShellHtml()
+
+    const dialog = document.querySelector<HTMLDialogElement>('[data-role="palette-dialog"]')
+    if (!dialog) {
+        throw new Error('Palette dialog was not created')
+    }
+
     const saveButton = dialog.querySelector<HTMLButtonElement>('[data-action="save-palette"]')!
     const cancelButton = dialog.querySelector<HTMLButtonElement>('[data-action="cancel-palette"]')!
 
@@ -101,16 +109,14 @@ export function initializePaletteDialog(hostSelector: string, options?: PaletteD
 
 function createDialogShellHtml(): string {
     return `
-    <button data-action="open-palette-dialog" class="pill-btn">Edit color palette</button>
-
     <dialog data-role="palette-dialog">
         <h2>Edit Color Palette</h2>
         <form method="dialog">
             <div data-palette-container></div>
             <p/>
             <div>
-                <button data-action="save-palette" class="pill-btn">save</button>
-                <button data-action="cancel-palette" class="pill-btn">cancel</button>
+                <button data-action="save-palette" class="pill-btn" default>Save</button>
+                <button data-action="cancel-palette" class="pill-btn">Cancel</button>
             </div>
         </form>
     </dialog>
@@ -120,22 +126,23 @@ function createDialogShellHtml(): string {
 function createPaletteHtml(palette: Palette): string {
     let html = ''
     html += '<table data-role="palette-table" style="padding:10px">'
-    html += '<tr><th>Item</th><th>Fill</th><th>Stroke</th></tr>'
+    html += '<tr><th></th><th>Fill</th><th>Stroke</th></tr>'
     html += row('bale_level_1', 'Level 1 Bale', palette.bale_level_1)
     html += row('bale_level_2', 'Level 2 Bale', palette.bale_level_2)
     html += row('bale_level_3', 'Level 3 Bale', palette.bale_level_3)
     html += row('start_box', 'Start Box', palette.start_box)
-    html += `<tr><td>selection</td><td></td><td><input type="color" data-key="selection" data-channel="stroke" value="${palette.selection.stroke}" /></td>`;
+    html += `<tr><td>Selection</td><td></td><td><input type="color" data-key="selection" data-channel="stroke" value="${palette.selection.stroke}" /></td>`;
     html += `</tr>`
     html += '</table>'
     return html
 
     function row(key: keyof Palette, name: string, style: { fill: string, stroke: string }): string {
-        return `<tr>
-      <td>${name}</td>
-      <td><input type="color" data-key="${key}" data-channel="fill" value="${style.fill}" /></td>
-      <td><input type="color" data-key="${key}" data-channel="stroke" value="${style.stroke}" /></td>
-    </tr>`
+        return `
+            <tr>
+                <td>${name}</td>
+                <td><input type="color" data-key="${key}" data-channel="fill" value="${style.fill}" /></td>
+                <td><input type="color" data-key="${key}" data-channel="stroke" value="${style.stroke}" /></td>
+            </tr>`
     }
 }
 

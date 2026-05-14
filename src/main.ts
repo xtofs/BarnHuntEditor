@@ -8,6 +8,9 @@ import { getPalette, initializePaletteDialog, type Palette } from './palette'
 const canvas = document.getElementById('ring') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
+const helpDialog = document.getElementById('keyboard-help-dialog') as HTMLDialogElement | null;
+const openHelpButton = document.getElementById('open-help') as HTMLButtonElement | null;
+
 const course: Course = {
   arena: {
     widthFt: 30,
@@ -25,13 +28,44 @@ const course: Course = {
 
 export var palette: Palette = await getPalette()
 
-initializePaletteDialog('#control', {
+initializePaletteDialog('#palette-dialog-placeholder', '#open-palette-dialog', {
   onPaletteChanged: (_palette) => {
     palette = _palette
     console.log('Current palette', palette)
     renderCourse(canvas, ctx, course);
   },
 })
+
+if (helpDialog !== null && openHelpButton !== null) {
+  openHelpButton.addEventListener('click', () => {
+    helpDialog.showModal();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (!isHelpShortcut(event)) {
+      return;
+    }
+
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    if (isEditableTarget(event.target)) {
+      return;
+    }
+
+    if (helpDialog.open || document.querySelector('dialog[open]') !== null) {
+      return;
+    }
+
+    event.preventDefault();
+    helpDialog.showModal();
+  });
+
+  helpDialog.addEventListener('close', () => {
+    canvas.focus();
+  });
+}
 
 resizeCanvasToElement();
 
@@ -115,7 +149,7 @@ function keydownHandler(event: KeyboardEvent) {
   if (selected === undefined) {
     return;
   }
-  const step = event.shiftKey ? 0.2 : 1;
+  const step = event.shiftKey ? 0.1 : 1;
   let handled = false;
 
   // arrow, delete and are handled here, the rest gets delegated to the seleced object
@@ -211,6 +245,23 @@ function findTopMostElementAt(x: number, y: number) {
   }
 
   return null;
+}
+
+function isHelpShortcut(event: KeyboardEvent) {
+  return event.key === '?' || event.key.toLowerCase() === 'h';
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target.closest('[contenteditable]:not([contenteditable="false"])') !== null
+  );
 }
 
 
