@@ -6,30 +6,6 @@ export interface ArenaViewport {
     offsetY: number;
 }
 
-export const style = {
-    bale: {
-        1: {
-            fill: '#f6b53b',
-            stroke: 'black',
-        },
-        2: {
-            fill: '#af7202',
-            stroke: 'black',
-        },
-        3: {
-            fill: '#744c02',
-            stroke: 'black',
-        },
-    },
-    selection: {
-        stroke: 'lime',
-        width: 4,
-    },
-    startBox: {
-        fill: '#259dff',
-        stroke: 'black',
-    },
-} as const;
 
 export function renderCourse(
     canvas: HTMLCanvasElement,
@@ -141,7 +117,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, arena: ArenaSize) {
         ctx.fillText(label, arena.widthFt + tickLength + labelGap, y);
     }
 
-    ctx.strokeStyle = '#6b7280';
+    ctx.strokeStyle = '#808080';
     ctx.lineWidth = px(2);
     ctx.strokeRect(0, 0, arena.widthFt, arena.heightFt);
 }

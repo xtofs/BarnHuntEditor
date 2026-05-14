@@ -1,14 +1,12 @@
 import './style.css'
 
-
 import { Bale, StartBox, type Course, type Item } from './model';
 import { canvasPointToWorld, getArenaViewport, renderCourse } from './renderer';
+import { getPalette, initializePaletteDialog, type Palette } from './palette'
 
 
 const canvas = document.getElementById('ring') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
-
-resizeCanvasToElement();
 
 const course: Course = {
   arena: {
@@ -16,11 +14,26 @@ const course: Course = {
     heightFt: 20,
   },
   items: [
-    new Bale(5, 4),
-    new Bale(11, 10, true),
+    new Bale(5, 4, true),
+    new Bale(10, 10),
+    new Bale(13, 12),
+    new Bale(16, 14).with_level(1),
+    new Bale(19, 16).with_level(2),
     new StartBox(25, 0),
   ],
 };
+
+export var palette: Palette = await getPalette()
+
+initializePaletteDialog('#control', {
+  onPaletteChanged: (_palette) => {
+    palette = _palette
+    console.log('Current palette', palette)
+    renderCourse(canvas, ctx, course);
+  },
+})
+
+resizeCanvasToElement();
 
 renderCourse(canvas, ctx, course);
 

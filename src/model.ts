@@ -1,4 +1,4 @@
-import { style } from './renderer'
+import { palette } from './main'
 
 type BaleLevel = 1 | 2 | 3;
 
@@ -49,11 +49,25 @@ export class Bale implements Item {
     static HEIGHT: number = 2;
     static CORNER_RADIUS: number = 0.25;
 
+    with_level(new_level: BaleLevel): Bale {
+        this.level = new_level
+        return this;
+    }
+
     draw(ctx: CanvasRenderingContext2D, arena: ArenaSize): void {
         const px = toWorldUnits(ctx);
         const level = this.level;
-        ctx.fillStyle = style.bale[level].fill;
-        ctx.strokeStyle = style.bale[level].stroke;
+
+        let style: { fill: string, stroke: string };
+        switch (level) {
+            case 1: style = palette.bale_level_1; break;
+            case 2: style = palette.bale_level_2; break;
+            case 3: style = palette.bale_level_3; break;
+            default: style = { fill: "hotpink", stroke: "lime" }; break;
+        }
+
+        ctx.fillStyle = style.fill;
+        ctx.strokeStyle = style.stroke;
         ctx.lineWidth = px(1);
 
         let { x, y } = this;
@@ -71,8 +85,8 @@ export class Bale implements Item {
 
         if (this.selected) {
             const delta = px(4);
-            ctx.lineWidth = px(style.selection.width);
-            ctx.strokeStyle = style.selection.stroke;
+            ctx.lineWidth = px(2 /*palette.selection.width*/);
+            ctx.strokeStyle = palette.selection.stroke;
 
             ctx.beginPath();
             ctx.roundRect(x - delta, y - delta, w + delta * 2, h + delta * 2, r);
@@ -106,8 +120,9 @@ export class Bale implements Item {
             return true;
         }
         if (event.key === '1' || event.key === '2' || event.key === '3') {
-            this.level = Number(event.key) as BaleLevel;
-            console.log(`level set to ${this.level}`);
+            const level = Number(event.key) as BaleLevel;
+            console.log(`set level to ${level}`);
+            this.level = level;
             return true;
         }
 
@@ -190,8 +205,8 @@ export class StartBox implements Item {
     draw(ctx: CanvasRenderingContext2D, _arena: ArenaSize): void {
         const px = toWorldUnits(ctx);
 
-        ctx.fillStyle = style.startBox.fill;
-        ctx.strokeStyle = style.startBox.stroke;
+        ctx.fillStyle = palette.start_box.fill;
+        ctx.strokeStyle = palette.start_box.stroke;
         ctx.lineWidth = px(1);
 
         let { x, y } = this;
@@ -200,13 +215,13 @@ export class StartBox implements Item {
         ctx.beginPath();
         ctx.rect(x, y, w, h);
         ctx.fill();
-        ctx.stroke();
+        // ctx.stroke();
 
         if (this.selected) {
-            const delta = px(4);
-            ctx.lineWidth = px(style.selection.width);
-            ctx.strokeStyle = style.selection.stroke;
+            ctx.lineWidth = px(4);
+            ctx.strokeStyle = palette.selection.stroke;
 
+            const delta = px(4);
             ctx.beginPath();
             ctx.rect(x - delta, y - delta, w + delta * 2, h + delta * 2);
             ctx.stroke();
