@@ -160,14 +160,40 @@ function keydownHandler(event: KeyboardEvent) {
   // single Shift press creates a weird event
   if (event.key === "Shift") return;
 
+  let handled = false;
+
+  // Global keys (work without selection)
+  if (event.key.toLowerCase() === 'b') {
+    // Add a new bale at center
+    const arena = courseManager.getArena();
+    const newBale = new Bale(arena.widthFt / 2 - 1, arena.heightFt / 2 - 1);
+    courseManager.addItem(newBale);
+    setSelection(newBale);
+    handled = true;
+  } else if (event.key.toLowerCase() === 's' && !event.ctrlKey && !event.metaKey) {
+    // Add a new start box at center (but not Ctrl+S or Cmd+S)
+    const arena = courseManager.getArena();
+    const newStartBox = new StartBox(arena.widthFt / 2 - 1.5, arena.heightFt / 2 - 1.5);
+    courseManager.addItem(newStartBox);
+    setSelection(newStartBox);
+    handled = true;
+  }
+
+  // Early return if global key was handled
+  if (handled) {
+    appController.notifyChange();
+    event.preventDefault();
+    return;
+  }
+
+  // Selection-based keys (require an item to be selected)
   const selected = courseManager.getItems().find((element) => element.selected);
   if (selected === undefined) {
     return;
   }
   const step = event.shiftKey ? 0.1 : 1;
-  let handled = false;
 
-  // arrow, delete and are handled here, the rest gets delegated to the seleced object
+  // arrow, delete and are handled here, the rest gets delegated to the selected object
   switch (event.key) {
     case 'ArrowUp':
       selected.y -= step;
