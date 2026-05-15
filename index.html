@@ -10,17 +10,17 @@
 
 <body>
   <div id="app">
-    <aside class="design-library-sidebar no-print">
-      <div id="design-library-container"></div>
-    </aside>
-    
     <section class="button-bar no-print" role="toolbar" aria-label="Editor actions">
+      <div class="button-bar-actions">
+        <button id="open-designs" class="pill-btn" type="button">Designs</button>
+        <span id="current-design-display" class="current-design-name"></span>
+      </div>
       <div class="button-bar-actions">
         <button id="open-help" class="pill-btn" type="button">Keyboard help</button>
         <button id="open-palette-dialog" class="pill-btn" type="button">Edit color palette</button>
+        <a class="pill-btn button-link" href="https://github.com/sponsors/xtofs" rel="noopener"
+          target="_blank">Sponsor</a>
       </div>
-      <a class="pill-btn button-link" href="https://github.com/sponsors/xtofs" rel="noopener"
-        target="_blank">Sponsor</a>
     </section>
 
     <section class="canvas-panel">
@@ -29,6 +29,10 @@
   </div>
 
   <div id="save-indicator" class="save-indicator">Saved ✓</div>
+
+  <dialog id="design-library-dialog" class="design-library-dialog no-print">
+    <div id="design-library-container"></div>
+  </dialog>
 
   <dialog id="palette-dialog-placeholder" class="no-print"></dialog>
 

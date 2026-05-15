@@ -14,6 +14,8 @@ interface AppControllerOptions {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   libraryContainer: HTMLElement;
+  dialog: HTMLDialogElement;
+  onCurrentDesignChanged?: (name: string) => void;
 }
 
 export class AppController {
@@ -21,13 +23,17 @@ export class AppController {
   private ctx: CanvasRenderingContext2D;
   private courseManager: CourseManager;
   private library: DesignLibrary;
+  private dialog: HTMLDialogElement;
   private currentDesign: Design | null = null;
   private saveTimeout: number | null = null;
   private designs: Design[] = [];
+  private onCurrentDesignChanged?: (name: string) => void;
 
   constructor(options: AppControllerOptions) {
     this.canvas = options.canvas;
     this.ctx = options.ctx;
+    this.dialog = options.dialog;
+    this.onCurrentDesignChanged = options.onCurrentDesignChanged;
     
     // Initialize with a default course
     const initialCourse = {
@@ -49,6 +55,7 @@ export class AppController {
       onNewDesign: () => this.createNewDesign(),
       onImportDesign: (design) => this.switchToDesign(design),
       onRenameDesign: (design, newName) => this.renameDesign(design, newName),
+      onClose: () => this.closeLibrary(),
     });
   }
 
@@ -81,6 +88,27 @@ export class AppController {
    */
   getCourseManager(): CourseManager {
     return this.courseManager;
+  }
+
+  /**
+   * Get the current design name
+   */
+  getCurrentDesignName(): string {
+    return this.currentDesign?.name ?? 'Untitled';
+  }
+
+  /**
+   * Open the design library dialog
+   */
+  openLibrary(): void {
+    this.dialog.showModal();
+  }
+
+  /**
+   * Close the design library dialog
+   */
+  closeLibrary(): void {
+    this.dialog.close();
   }
 
   /**
@@ -132,6 +160,11 @@ export class AppController {
     
     this.updateLibrary();
     this.render();
+    
+    // Notify about design change
+    if (this.onCurrentDesignChanged) {
+      this.onCurrentDesignChanged(design.name);
+    }
   }
 
   /**
@@ -184,6 +217,11 @@ export class AppController {
     if (this.currentDesign?.id === design.id) {
       this.currentDesign.name = newName;
       await this.saveCurrentDesign();
+      
+      // Notify about name change
+      if (this.onCurrentDesignChanged) {
+        this.onCurrentDesignChanged(newName);
+      }
     } else {
       // Save the design with the new name
       const loaded = await loadDesign(design.id);

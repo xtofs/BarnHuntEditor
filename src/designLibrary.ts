@@ -7,6 +7,7 @@ export interface DesignLibraryCallbacks {
   onNewDesign: () => void;
   onImportDesign: (design: Design) => void;
   onRenameDesign: (design: Design, newName: string) => void;
+  onClose: () => void;
 }
 
 export class DesignLibrary {
@@ -32,11 +33,19 @@ export class DesignLibrary {
       <div class="design-library">
         <div class="design-library-header">
           <h2>Designs</h2>
-          <button class="new-design-btn" title="New Design">
-            <svg width="20" height="20" viewBox="0 0 20 20">
-              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
+          <div class="design-library-header-actions">
+            <button class="new-design-btn" title="New Design">
+              <svg width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              New
+            </button>
+            <button class="close-library-btn" title="Close">
+              <svg width="20" height="20" viewBox="0 0 20 20">
+                <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
         
         <div class="design-list">
@@ -49,8 +58,9 @@ export class DesignLibrary {
               <path d="M8 12V4M5 9l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            Import
+            Import Design
           </button>
+          <button class="close-dialog-btn">Close</button>
         </div>
       </div>
     `;
@@ -62,7 +72,7 @@ export class DesignLibrary {
     return `
       <div class="design-empty">
         <p>No designs yet</p>
-        <p class="design-empty-hint">Click + to create your first design</p>
+        <p class="design-empty-hint">Click "New" to create your first design</p>
       </div>
     `;
   }
@@ -107,6 +117,12 @@ export class DesignLibrary {
     const newBtn = this.container.querySelector('.new-design-btn');
     newBtn?.addEventListener('click', () => this.callbacks.onNewDesign());
 
+    // Close buttons
+    const closeButtons = this.container.querySelectorAll('.close-library-btn, .close-dialog-btn');
+    closeButtons.forEach(btn => {
+      btn.addEventListener('click', () => this.callbacks.onClose());
+    });
+
     // Import button
     const importBtn = this.container.querySelector('.import-btn');
     importBtn?.addEventListener('click', () => this.handleImport());
@@ -126,6 +142,7 @@ export class DesignLibrary {
           const design = this.findDesignById(id);
           if (design) {
             this.callbacks.onSelectDesign(design);
+            this.callbacks.onClose(); // Close dialog after selecting
           }
         }
       });

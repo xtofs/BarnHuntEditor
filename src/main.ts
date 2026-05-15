@@ -9,6 +9,9 @@ import { AppController } from './appController';
 const canvas = document.getElementById('ring') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 const libraryContainer = document.getElementById('design-library-container') as HTMLElement;
+const libraryDialog = document.getElementById('design-library-dialog') as HTMLDialogElement;
+const openDesignsButton = document.getElementById('open-designs') as HTMLButtonElement;
+const currentDesignDisplay = document.getElementById('current-design-display') as HTMLElement;
 
 const helpDialog = document.getElementById('keyboard-help-dialog') as HTMLDialogElement | null;
 const openHelpButton = document.getElementById('open-help') as HTMLButtonElement | null;
@@ -16,11 +19,29 @@ const openHelpButton = document.getElementById('open-help') as HTMLButtonElement
 export var palette: Palette = await getPalette()
 
 // Initialize the app controller
-const appController = new AppController({ canvas, ctx, libraryContainer });
+const appController = new AppController({ 
+  canvas, 
+  ctx, 
+  libraryContainer, 
+  dialog: libraryDialog,
+  onCurrentDesignChanged: (name) => {
+    currentDesignDisplay.innerHTML = `<strong>${name}</strong>`;
+  }
+});
 await appController.initialize();
 
 // Get the course manager for use throughout
 const courseManager = appController.getCourseManager();
+
+// Set up the "Designs" button to open the dialog
+openDesignsButton.addEventListener('click', () => {
+  appController.openLibrary();
+});
+
+// Focus canvas when dialog closes
+libraryDialog.addEventListener('close', () => {
+  canvas.focus();
+});
 
 initializePaletteDialog('#palette-dialog-placeholder', '#open-palette-dialog', {
   onPaletteChanged: (_palette) => {
