@@ -1,38 +1,32 @@
 import './style.css'
 
-import { Bale, StartBox, type Course, type Item } from './model';
+import { Bale, StartBox, type Item } from './model';
 import { canvasPointToWorld, getArenaViewport, renderCourse } from './renderer';
 import { getPalette, initializePaletteDialog, type Palette } from './palette'
+import { AppController } from './appController';
 
 
 const canvas = document.getElementById('ring') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
+const libraryContainer = document.getElementById('design-library-container') as HTMLElement;
 
 const helpDialog = document.getElementById('keyboard-help-dialog') as HTMLDialogElement | null;
 const openHelpButton = document.getElementById('open-help') as HTMLButtonElement | null;
 
-const course: Course = {
-  arena: {
-    widthFt: 30,
-    heightFt: 20,
-  },
-  items: [
-    new Bale(5, 4, true),
-    new Bale(10, 10),
-    new Bale(13, 12),
-    new Bale(16, 14).with_level(1),
-    new Bale(19, 16).with_level(2),
-    new StartBox(25, 0),
-  ],
-};
-
 export var palette: Palette = await getPalette()
+
+// Initialize the app controller
+const appController = new AppController({ canvas, ctx, libraryContainer });
+await appController.initialize();
+
+// Get the course manager for use throughout
+const courseManager = appController.getCourseManager();
 
 initializePaletteDialog('#palette-dialog-placeholder', '#open-palette-dialog', {
   onPaletteChanged: (_palette) => {
     palette = _palette
     console.log('Current palette', palette)
-    renderCourse(canvas, ctx, course);
+    renderCourse(canvas, ctx, courseManager.getCourse() as any);
   },
 })
 
@@ -69,7 +63,7 @@ if (helpDialog !== null && openHelpButton !== null) {
 
 resizeCanvasToElement();
 
-renderCourse(canvas, ctx, course);
+renderCourse(canvas, ctx, courseManager.getCourse() as any);
 
 let draggedElement: Item | null = null;
 let lastPointerXWorld = 0;
@@ -77,7 +71,7 @@ let lastPointerYWorld = 0;
 
 canvas.addEventListener('pointerdown', (event) => {
   const canvasPoint = getCanvasPoint(event);
-  const viewport = getArenaViewport(canvas, course.arena);
+  const viewport = getArenaViewport(canvas, courseManager.getArena());
   const worldPoint = canvasPointToWorld(canvasPoint.x, canvasPoint.y, viewport);
   const hitElement = findTopMostElementAt(worldPoint.x, worldPoint.y);
 
@@ -92,7 +86,7 @@ canvas.addEventListener('pointerdown', (event) => {
     canvas.focus();
   }
 
-  renderCourse(canvas, ctx, course);
+  appController.notifyChange();
 });
 
 canvas.addEventListener('pointermove', (event) => {
@@ -101,19 +95,19 @@ canvas.addEventListener('pointermove', (event) => {
   }
 
   const canvasPoint = getCanvasPoint(event);
-  const viewport = getArenaViewport(canvas, course.arena);
+  const viewport = getArenaViewport(canvas, courseManager.getArena());
   const worldPoint = canvasPointToWorld(canvasPoint.x, canvasPoint.y, viewport);
   const dx = worldPoint.x - lastPointerXWorld;
   const dy = worldPoint.y - lastPointerYWorld;
 
   draggedElement.x += dx;
   draggedElement.y += dy;
-  draggedElement.applyPlacementRules(course.arena);
+  draggedElement.applyPlacementRules(courseManager.getArena());
 
   lastPointerXWorld = worldPoint.x;
   lastPointerYWorld = worldPoint.y;
 
-  renderCourse(canvas, ctx, course);
+  appController.notifyChange();
 });
 
 canvas.addEventListener('pointerup', (event) => {
@@ -136,7 +130,7 @@ canvas.addEventListener('keydown', keydownHandler);
 
 window.addEventListener('resize', () => {
   resizeCanvasToElement();
-  renderCourse(canvas, ctx, course);
+  renderCourse(canvas, ctx, courseManager.getCourse() as any);
 });
 
 
@@ -145,7 +139,7 @@ function keydownHandler(event: KeyboardEvent) {
   // single Shift press creates a weird event
   if (event.key === "Shift") return;
 
-  const selected = course.items.find((element) => element.selected);
+  const selected = courseManager.getItems().find((element) => element.selected);
   if (selected === undefined) {
     return;
   }
@@ -176,10 +170,11 @@ function keydownHandler(event: KeyboardEvent) {
 
     case 'Tab':
       if (selected !== null) {
-        const ix = course.items.findIndex(item => item === selected);
+        const items = courseManager.getItems() as Item[];
+        const ix = items.findIndex(item => item === selected);
         const step = event.shiftKey ? -1 : 1;
-        const len = course.items.length;
-        const next = course.items[(ix + step + len) % len];
+        const len = items.length;
+        const next = items[(ix + step + len) % len];
         next.selected = true;
         selected.selected = false;
         handled = true;
@@ -188,7 +183,7 @@ function keydownHandler(event: KeyboardEvent) {
 
     case 'Delete':
     case 'Backspace':
-      course.items = course.items.filter(item => !item.selected);
+      courseManager.removeSelected();
       handled = true
       break;
 
@@ -204,8 +199,8 @@ function keydownHandler(event: KeyboardEvent) {
   }
 
   if (handled) {
-    selected.applyPlacementRules(course.arena);
-    renderCourse(canvas, ctx, course);
+    selected.applyPlacementRules(courseManager.getArena());
+    appController.notifyChange();
     event.preventDefault();
   } else {
     console.warn(`unhandled keydown ${event.shiftKey ? "Shift+" : ""}${event.key}`)
@@ -231,14 +226,15 @@ function getCanvasPoint(event: PointerEvent) {
 }
 
 function setSelection(selected: Item | null) {
-  for (const element of course.items) {
+  for (const element of courseManager.getItems()) {
     element.selected = element === selected;
   }
 }
 
 function findTopMostElementAt(x: number, y: number) {
-  for (let index = course.items.length - 1; index >= 0; index -= 1) {
-    const element = course.items[index];
+  const items = courseManager.getItems() as Item[];
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    const element = items[index];
     if (element.hitTest(x, y)) {
       return element;
     }

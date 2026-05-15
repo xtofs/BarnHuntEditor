@@ -10,6 +10,10 @@
 
 <body>
   <div id="app">
+    <aside class="design-library-sidebar no-print">
+      <div id="design-library-container"></div>
+    </aside>
+    
     <section class="button-bar no-print" role="toolbar" aria-label="Editor actions">
       <div class="button-bar-actions">
         <button id="open-help" class="pill-btn" type="button">Keyboard help</button>
@@ -23,6 +27,8 @@
       <canvas id="ring" tabindex="0"></canvas>
     </section>
   </div>
+
+  <div id="save-indicator" class="save-indicator">Saved ✓</div>
 
   <dialog id="palette-dialog-placeholder" class="no-print"></dialog>
 
