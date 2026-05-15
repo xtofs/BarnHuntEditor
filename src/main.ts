@@ -1,6 +1,6 @@
 import './style.css'
 
-import { Bale, StartBox, type Item } from './model';
+import { Bale, StartBox, Course, type Item } from './model';
 import { canvasPointToWorld, getArenaViewport, renderCourse } from './renderer';
 import { getPalette, initializePaletteDialog, type Palette } from './palette'
 import { AppController } from './appController';
@@ -15,6 +15,19 @@ const currentDesignDisplay = document.getElementById('current-design-display') a
 
 const helpDialog = document.getElementById('keyboard-help-dialog') as HTMLDialogElement | null;
 const openHelpButton = document.getElementById('open-help') as HTMLButtonElement | null;
+
+const course: Course = new Course({
+  widthFt: 30,
+  heightFt: 20,
+});
+
+course.AddItem(new Bale(5, 4, true));
+course.AddItem(new Bale(10, 10));
+course.AddItem(new Bale(13, 12));
+course.AddItem(new Bale(16, 14).with_level(1));
+course.AddItem(new Bale(19, 16).with_level(2));
+course.AddItem(new StartBox(25, 0));
+
 
 export var palette: Palette = await getPalette()
 
@@ -56,26 +69,40 @@ if (helpDialog !== null && openHelpButton !== null) {
     helpDialog.showModal();
   });
 
-  document.addEventListener('keydown', (event) => {
-    if (!isHelpShortcut(event)) {
-      return;
+  document.addEventListener('keydown', (evt) => keydownHandler(evt, helpDialog))
+
+  function keydownHandler(event: KeyboardEvent, helpDialog: HTMLDialogElement) {
+
+
+    console.log(`key down ${event.key}`);
+
+    if (isHelpShortcut(event)) {
+
+      event.preventDefault();
+      helpDialog.showModal();
     }
 
-    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) {
-      return;
-    }
+    // if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) {
+    //   return;
+    // }
 
-    if (isEditableTarget(event.target)) {
-      return;
-    }
+    // if (isEditableTarget(event.target)) {
+    //   return;
+    // }
 
     if (helpDialog.open || document.querySelector('dialog[open]') !== null) {
       return;
     }
 
-    event.preventDefault();
-    helpDialog.showModal();
-  });
+    switch (event.key) {
+      case 'b':
+        course.AddItem(new Bale(10, 10));
+        renderCourse(canvas, ctx, course);
+        event.preventDefault();
+        break;
+    }
+
+  };
 
   helpDialog.addEventListener('close', () => {
     canvas.focus();
